@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4Play AUTO (FIXED FLOW)
 // @namespace    ardie
-// @version      5.3
+// @version      6.6
 // @match        *://4play.to/*
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/4play.to-quick.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/4play.to-quick.user.js
