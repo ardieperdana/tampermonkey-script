@@ -22,6 +22,7 @@ async function run4PlayAutomation() {
 
     const templates = [
 "Ini yang gua cari-cari, save dulu ya",
+"Mantap admin",
 "Gila keren sih, gua download dulu",
 "Makasih banget udah share, kepake nih",
 "Ini legit banget, gua simpen dulu",
