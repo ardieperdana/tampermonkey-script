@@ -22,7 +22,8 @@ const blockedSites = [
     "youtube.com",
     "daysignature.my.id",
     "chatgpt.com",
-    "outlook.com"
+    "outlook.com",
+    "tiktok.com"
 ];
 
 if (blockedSites.some(site => location.hostname.includes(site))) {
