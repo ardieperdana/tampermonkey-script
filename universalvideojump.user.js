@@ -191,15 +191,15 @@ style.innerHTML = `
     gap:8px;
     z-index:2147483647;
     padding:6px 4px;
+    backdrop-filter: blur(8px);
 }
 
 .jump-controls-left button{
-    background: rgba(255,255,255,0.15);
     border:none;
     color:white;
     border-radius:999px;
     padding:4px 8px;
-    font-size:10px;
+    font-size:12px;
     cursor:pointer;
     transition: 0.2s;
 }
