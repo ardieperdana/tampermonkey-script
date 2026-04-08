@@ -190,10 +190,7 @@ style.innerHTML = `
     display:flex;
     gap:8px;
     z-index:2147483647;
-
-    background: rgba(0,0,0,0.35);
     padding:6px 4px;
-    border-radius:6px;
     backdrop-filter: blur(2px);
 }
 
@@ -217,7 +214,7 @@ style.innerHTML = `
 @media (max-width:768px){
 
 .jump-controls-left{
-    bottom:60px; /* biar ga ketabrak UI player */
+    bottom:30px;
     gap:4px;
     padding:3px 6px;
 }
