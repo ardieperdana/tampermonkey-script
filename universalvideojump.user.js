@@ -195,6 +195,7 @@ style.innerHTML = `
 }
 
 .jump-controls-left button{
+background: rgba(0,0,0,0.25);
     border:none;
     color:white;
     border-radius:999px;
