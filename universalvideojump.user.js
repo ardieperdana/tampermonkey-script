@@ -215,15 +215,18 @@ style.innerHTML = `
 
 /* MOBILE */
 @media (max-width:768px){
-    .jump-controls-left{
-        bottom:80px;
-        gap:10px;
-    }
 
-    .jump-controls-left button{
-        padding:12px 16px;
-        font-size:16px;
-    }
+.jump-controls-left{
+    bottom:60px; /* biar ga ketabrak UI player */
+    gap:4px;
+    padding:3px 6px;
+}
+
+.jump-controls-left button{
+    padding:4px 6px;
+    font-size:11px;
+}
+
 }
 `;
 document.head.appendChild(style);
