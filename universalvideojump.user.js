@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      5.1
+// @version      5.2
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -132,8 +132,12 @@ function createControls(video){
     leftContainer.appendChild(back30);
     leftContainer.appendChild(back5);
     
-    parent.appendChild(rightContainer);
-    parent.appendChild(leftContainer);
+// gabung semua ke leftContainer
+leftContainer.appendChild(forward5);
+leftContainer.appendChild(forward30);
+
+// ga perlu rightContainer lagi
+parent.appendChild(leftContainer);
 
     // fullscreen fix
     document.addEventListener("fullscreenchange",()=>{
@@ -178,57 +182,52 @@ if(!window.jumpListenerAdded){
 // ======================
 const style = document.createElement("style");
 style.innerHTML = `
-.jump-controls-right{
-    position:absolute;
-    bottom:300px;
-    right:60px;
-    display:flex;
-    gap:10px;
-    z-index:2147483647;
-}
-
 .jump-controls-left{
     position:absolute;
-    bottom:300px;
-    left:60px;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
     display:flex;
-    gap:10px;
+    gap:8px;
     z-index:2147483647;
+
+    background: rgba(0,0,0,0.35);
+    padding:8px 12px;
+    border-radius:14px;
+    backdrop-filter: blur(8px);
 }
 
-.jump-controls-right button,
 .jump-controls-left button{
-    background: rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.15);
     border:none;
     color:white;
-    border-radius:50px;
-    padding:10px 14px;
-    font-size:16px;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:14px;
     cursor:pointer;
+    transition: 0.2s;
 }
 
+.jump-controls-left button:hover{
+    background: rgba(255,255,255,0.35);
+    transform: scale(1.1);
+}
+
+/* MOBILE */
 @media (max-width:768px){
+    .jump-controls-left{
+        bottom:80px;
+        gap:10px;
+    }
 
-.jump-controls-right{
-    bottom:80px;
-    right:15px;
-}
-
-.jump-controls-left{
-    bottom:80px;
-    left:15px;
-}
-
-.jump-controls-right button,
-.jump-controls-left button{
-    padding:14px 18px;
-    font-size:18px;
-}
-
+    .jump-controls-left button{
+        padding:12px 16px;
+        font-size:16px;
+    }
 }
 `;
 document.head.appendChild(style);
-
+    
 // ======================
 // LOOP
 // ======================
