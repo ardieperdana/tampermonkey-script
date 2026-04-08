@@ -184,7 +184,7 @@ const style = document.createElement("style");
 style.innerHTML = `
 .jump-controls-left{
     position:absolute;
-    bottom:20px;
+    bottom:8px;
     left:50%;
     transform:translateX(-50%);
     display:flex;
@@ -192,9 +192,9 @@ style.innerHTML = `
     z-index:2147483647;
 
     background: rgba(0,0,0,0.35);
-    padding:8px 12px;
-    border-radius:14px;
-    backdrop-filter: blur(8px);
+    padding:6px 4px;
+    border-radius:6px;
+    backdrop-filter: blur(2px);
 }
 
 .jump-controls-left button{
@@ -202,8 +202,8 @@ style.innerHTML = `
     border:none;
     color:white;
     border-radius:999px;
-    padding:8px 12px;
-    font-size:14px;
+    padding:4px 8px;
+    font-size:10px;
     cursor:pointer;
     transition: 0.2s;
 }
