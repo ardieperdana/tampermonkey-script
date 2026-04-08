@@ -198,7 +198,7 @@ style.innerHTML = `
 background: rgba(0,0,0,0.25);
     border:none;
     color:white;
-    border-radius:999px;
+    border-radius:12px;
     padding:4px 8px;
     font-size:12px;
     cursor:pointer;
@@ -215,7 +215,7 @@ background: rgba(0,0,0,0.25);
 
 .jump-controls-left{
     bottom:30px;
-    gap:4px;
+    gap:8px;
     padding:3px 6px;
 }
 
