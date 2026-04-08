@@ -191,7 +191,6 @@ style.innerHTML = `
     gap:8px;
     z-index:2147483647;
     padding:6px 4px;
-    backdrop-filter: blur(2px);
 }
 
 .jump-controls-left button{
