@@ -111,13 +111,13 @@ function createControls(video){
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
  // ===== VOLUME ======
-    const volUp = document.createElement('button');
-    volUp.innerText = "VOL+5";
-    volUp.onclick = () => changeVolume(5);
-
     const volDown = document.createElement('button');
-    volDown.innerText = "VOL-5";
+    volDown.innerText = "♫ -5";
     volDown.onclick = () => changeVolume(-5);
+    
+    const volUp = document.createElement('button');
+    volUp.innerText = "♫ +5";
+    volUp.onclick = () => changeVolume(5);
 // ===== //VOLUME ======
     const back30 = document.createElement('button');
     back30.innerText = "-30";
@@ -127,14 +127,12 @@ function createControls(video){
     back5.innerText = "-5";
     back5.onclick = () => jump(-5);
 
-    leftContainer.appendChild(volUp);
-    leftContainer.appendChild(volDown);
     leftContainer.appendChild(back30);
     leftContainer.appendChild(back5);
-    
-// gabung semua ke leftContainer
-leftContainer.appendChild(forward5);
-leftContainer.appendChild(forward30);
+    leftContainer.appendChild(volDown);
+    leftContainer.appendChild(volUp);
+    leftContainer.appendChild(forward5);
+    leftContainer.appendChild(forward30);
 
 // ga perlu rightContainer lagi
 parent.appendChild(leftContainer);
