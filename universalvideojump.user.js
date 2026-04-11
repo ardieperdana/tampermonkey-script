@@ -227,6 +227,9 @@ if(!window.jumpListenerAdded){
 const style = document.createElement("style");
 style.innerHTML = `
 .jump-controls-left{
+    display:inline-flex; /* 🔥 ini penting */
+    align-items:center;  /* biar ga stretch */
+    height:auto;         /* paksa normal */
     position:absolute;
     bottom:8px;
     left:20px;
