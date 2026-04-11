@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      5.5
+// @version      5.5.1
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -252,8 +252,8 @@ background: rgba(0,0,0,0.25);
     border:none;
     color:white;
     border-radius:12px;
-    padding:4px 8px;
-    font-size:12px;
+    padding:8px 16px;
+    font-size:18px;
     cursor:pointer;
     transition: 0.2s;
 }
@@ -276,7 +276,7 @@ background: rgba(0,0,0,0.25);
 
 .jump-controls-left{
     bottom:30px;
-    gap:8px;
+    gap:22px;
     padding:3px 6px;
 }
 
