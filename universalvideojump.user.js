@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      5.2
+// @version      1.2
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -81,6 +81,54 @@ function jump(seconds){
     console.log("🔊 Volume:", Math.round(newVolume * 100) + "%");
 }
 // ======================
+// Drag
+// ======================
+    function makeDraggable(el){
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    // ===== MOUSE (PC) =====
+    el.addEventListener("mousedown", (e)=>{
+        isDragging = true;
+        offsetX = e.clientX - el.getBoundingClientRect().left;
+        offsetY = e.clientY - el.getBoundingClientRect().top;
+    });
+
+    document.addEventListener("mousemove", (e)=>{
+        if(!isDragging) return;
+
+        el.style.left = (e.clientX - offsetX) + "px";
+        el.style.top = (e.clientY - offsetY) + "px";
+        el.style.transform = "none"; // penting biar ga ketarik translateX lagi
+    });
+
+    document.addEventListener("mouseup", ()=>{
+        isDragging = false;
+    });
+
+    // ===== TOUCH (HP) =====
+    el.addEventListener("touchstart", (e)=>{
+        isDragging = true;
+        const touch = e.touches[0];
+        offsetX = touch.clientX - el.getBoundingClientRect().left;
+        offsetY = touch.clientY - el.getBoundingClientRect().top;
+    });
+
+    document.addEventListener("touchmove", (e)=>{
+        if(!isDragging) return;
+
+        const touch = e.touches[0];
+
+        el.style.left = (touch.clientX - offsetX) + "px";
+        el.style.top = (touch.clientY - offsetY) + "px";
+        el.style.transform = "none";
+    });
+
+    document.addEventListener("touchend", ()=>{
+        isDragging = false;
+    });
+}
+// ======================
 // CREATE BUTTONS
 // ======================
 function createControls(video){
@@ -104,21 +152,19 @@ function createControls(video){
     forward30.innerText = "+30";
     forward30.onclick = () => jump(30);
 
-    rightContainer.appendChild(forward5);
-    rightContainer.appendChild(forward30);
-
     // ===== LEFT ======
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
+    makeDraggable(leftContainer);
  // ===== VOLUME ======
     const volDown = document.createElement('button');
-    volDown.innerText = "♫ -5";
-    volDown.onclick = () => changeVolume(-5);
+    volDown.innerText = "♫-";
+    volDown.onclick = () => changeVolume(-10);
     
     const volUp = document.createElement('button');
-    volUp.innerText = "♫ +5";
-    volUp.onclick = () => changeVolume(5);
-// ===== //VOLUME ======
+    volUp.innerText = "♫+";
+    volUp.onclick = () => changeVolume(10);
+// ===== //END VOLUME ======
     const back30 = document.createElement('button');
     back30.innerText = "-30";
     back30.onclick = () => jump(-30);
@@ -183,8 +229,8 @@ style.innerHTML = `
 .jump-controls-left{
     position:absolute;
     bottom:8px;
-    left:50%;
-    transform:translateX(-50%);
+    left:20px;
+    transform:none;
     display:flex;
     gap:8px;
     z-index:2147483647;
@@ -206,6 +252,14 @@ background: rgba(0,0,0,0.25);
 .jump-controls-left button:hover{
     background: rgba(255,255,255,0.35);
     transform: scale(1.1);
+}
+
+.jump-controls-left{
+    cursor: grab;
+}
+
+.jump-controls-left:active{
+    cursor: grabbing;
 }
 
 /* MOBILE */
