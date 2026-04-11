@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      1.2
+// @version      5.5
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -96,10 +96,12 @@ function jump(seconds){
 
     document.addEventListener("mousemove", (e)=>{
         if(!isDragging) return;
-
+    
         el.style.left = (e.clientX - offsetX) + "px";
         el.style.top = (e.clientY - offsetY) + "px";
-        el.style.transform = "none"; // penting biar ga ketarik translateX lagi
+    
+        el.style.bottom = "auto";   // 🔥 WAJIB
+        el.style.transform = "none";
     });
 
     document.addEventListener("mouseup", ()=>{
@@ -116,11 +118,13 @@ function jump(seconds){
 
     document.addEventListener("touchmove", (e)=>{
         if(!isDragging) return;
-
+    
         const touch = e.touches[0];
-
+    
         el.style.left = (touch.clientX - offsetX) + "px";
         el.style.top = (touch.clientY - offsetY) + "px";
+    
+        el.style.bottom = "auto";   // 🔥 WAJIB
         el.style.transform = "none";
     });
 
