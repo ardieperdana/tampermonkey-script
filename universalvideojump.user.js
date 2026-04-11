@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      1.3
+// @version      1.2
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -227,9 +227,11 @@ if(!window.jumpListenerAdded){
 const style = document.createElement("style");
 style.innerHTML = `
 .jump-controls-left{
-    display:inline-flex; /* 🔥 ini penting */
-    align-items:center;  /* biar ga stretch */
-    height:auto;         /* paksa normal */
+    display:inline-flex;
+    align-items:center;
+    height:auto;
+    width: fit-content;
+    max-width: max-content;
     position:absolute;
     bottom:8px;
     left:20px;
@@ -238,7 +240,7 @@ style.innerHTML = `
     gap:8px;
     z-index:2147483647;
     padding:6px 4px;
-    backdrop-filter: blur(8px);
+    overflow:hidden;
 }
 
 .jump-controls-left button{
