@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      5.6
+// @version      5.7
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -216,11 +216,14 @@ if(!window.jumpListenerAdded){
 
     document.addEventListener('keydown',function(e){
 
-        if(e.key === "ArrowLeft") jump(-5);
-        if(e.key === "ArrowRight") jump(5);
+        if(e.key === "ArrowLeft") jump(-30);
+        if(e.key === "ArrowRight") jump(30);
 
-        if(e.key === ",") jump(-30);
-        if(e.key === ".") jump(30);
+        if(e.key === ",") jump(-5);
+        if(e.key === ".") jump(5);
+
+        if(e.key === "-") changeVolume(-10);
+        if(e.key === "=") changeVolume(10);
 
     });
 }
