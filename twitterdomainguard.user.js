@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Firebase Twitter Domain Guard (Normalized)
 // @namespace    twitterFirebaseGuard
-// @version      2.0
+// @version      2.1
 // @updateURL   https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @downloadURL https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @match        https://twitter.com/*
@@ -75,8 +75,8 @@
         });
     }
 
-    // 🔥 Highlight
-    function highlight() {
+// 🔥 Highlight + Block Click
+function highlight() {
     if (!domainList.length) return;
 
     document.querySelectorAll("a").forEach(link => {
@@ -85,8 +85,21 @@
 
         domainList.forEach(domain => {
             if (text.includes(domain) || href.includes(domain)) {
+
+                // style merah
                 link.style.color = "red";
                 link.style.fontWeight = "bold";
+
+                // disable klik
+                link.style.pointerEvents = "none";
+                link.style.cursor = "not-allowed";
+                link.style.opacity = "0.7";
+
+                // opsional: tooltip
+                link.title = "Blocked domain";
+
+                // lebih brutal: hapus href
+                link.removeAttribute("href");
             }
         });
     });
