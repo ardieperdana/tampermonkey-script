@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      6.1
+// @version      6.3
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -32,10 +32,7 @@ if (blockedSites.some(site => location.hostname.includes(site))) {
 }
 
 let globalControls = null;
-let isHiddenByUser = false;
-
-// Variabel baru untuk menyimpan posisi terakhir hasil drag user
-let lastUserPosition = null;
+let isHiddenByUser = false; // Flag biar kalau di-close ga nongol lagi otomatis
 
 // ======================
 // GET ACTIVE VIDEO
@@ -44,9 +41,11 @@ function getActiveVideo(){
     const videos = [...document.querySelectorAll("video")];
     if(videos.length === 0) return null;
 
+    // Cari yang beneran lagi diputar
     let playing = videos.find(v => !v.paused && !v.ended && v.readyState > 2);
     if(playing) return playing;
 
+    // Kalau ga ada yang putar, cari yang paling gede ukurannya di layar
     let biggest = videos.sort((a,b)=>
         (b.offsetWidth*b.offsetHeight)-(a.offsetWidth*a.offsetHeight)
     )[0];
@@ -91,7 +90,7 @@ function changeVolume(delta){
 }
 
 // ======================
-// DRAG HANDLER (PERBAIKAN ANTI-LONCAT)
+// DRAG HANDLER
 // ======================
 function makeDraggable(el){
     let isDragging = false;
@@ -99,58 +98,28 @@ function makeDraggable(el){
 
     el.addEventListener("mousedown", (e)=>{
         if(e.target.classList.contains('jump-close-btn') || e.target.classList.contains('jump-toggle-back')) return;
-
         isDragging = true;
-
-        // Ambil posisi koordinat 'left' dan 'top' yang sedang aktif saat ini
-        // Jika belum ada/masih berupa 'auto', kita beri nilai default-nya
-        let currentLeft = parseFloat(el.style.left) || 20;
-        let currentTop = parseFloat(el.style.top) || (el.parentElement ? el.parentElement.offsetHeight - el.offsetHeight - 8 : 0);
-
-        // Konversi instan ke posisi top-left absolut agar tidak bentrok dengan properti 'bottom' bawaan CSS
-        el.style.left      = currentLeft + "px";
-        el.style.top       = currentTop + "px";
-        el.style.bottom    = "auto";
-        el.style.transform = "none";
-
-        // Hitung jarak kursor mouse relatif terhadap titik koordinat internal elemen
-        offsetX = e.clientX - currentLeft;
-        offsetY = e.clientY - currentTop;
-
+        offsetX = e.clientX - el.getBoundingClientRect().left;
+        offsetY = e.clientY - el.getBoundingClientRect().top;
         e.preventDefault();
     });
 
     document.addEventListener("mousemove", (e)=>{
         if(!isDragging) return;
-        // Posisi baru murni mengikuti pergerakan mouse dikurangi offset awal tanpa interupsi
         el.style.left      = (e.clientX - offsetX) + "px";
         el.style.top       = (e.clientY - offsetY) + "px";
-    });
-
-    document.addEventListener("mouseup", () => {
-        if (isDragging) {
-            isDragging = false;
-            lastUserPosition = { left: el.style.left, top: el.style.top };
-        }
-    });
-
-    // --- UNTUK HP / TOUCH (Tetap aman & nyaman) ---
-    el.addEventListener("touchstart", (e)=>{
-        if(e.target.classList.contains('jump-close-btn') || e.target.classList.contains('jump-toggle-back')) return;
-
-        isDragging = true;
-        const touch = e.touches[0];
-
-        let currentLeft = parseFloat(el.style.left) || 20;
-        let currentTop = parseFloat(el.style.top) || (el.parentElement ? el.parentElement.offsetHeight - el.offsetHeight - 8 : 0);
-
-        el.style.left      = currentLeft + "px";
-        el.style.top       = currentTop + "px";
         el.style.bottom    = "auto";
         el.style.transform = "none";
+    });
 
-        offsetX = touch.clientX - currentLeft;
-        offsetY = touch.clientY - currentTop;
+    document.addEventListener("mouseup", () => { isDragging = false; });
+
+    el.addEventListener("touchstart", (e)=>{
+        if(e.target.classList.contains('jump-close-btn') || e.target.classList.contains('jump-toggle-back')) return;
+        isDragging = true;
+        const touch = e.touches[0];
+        offsetX = touch.clientX - el.getBoundingClientRect().left;
+        offsetY = touch.clientY - el.getBoundingClientRect().top;
     }, { passive: true });
 
     document.addEventListener("touchmove", (e)=>{
@@ -158,15 +127,33 @@ function makeDraggable(el){
         const touch = e.touches[0];
         el.style.left      = (touch.clientX - offsetX) + "px";
         el.style.top       = (touch.clientY - offsetY) + "px";
+        el.style.bottom    = "auto";
+        el.style.transform = "none";
     }, { passive: true });
 
-    document.addEventListener("touchend", () => {
-        if (isDragging) {
-            isDragging = false;
-            lastUserPosition = { left: el.style.left, top: el.style.top };
-        }
-    });
+    document.addEventListener("touchend", () => { isDragging = false; });
 }
+
+function clampToViewport(el){
+    if(!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw   = window.innerWidth;
+    const vh   = window.innerHeight;
+
+    let left = rect.left;
+    let top  = rect.top;
+
+    if(left < 0)               left = 4;
+    if(top  < 0)               top  = 4;
+    if(left + rect.width > vw) left = vw - rect.width - 4;
+    if(top + rect.height > vh) top  = vh - rect.height - 4;
+
+    el.style.left      = left + "px";
+    el.style.top       = top  + "px";
+    el.style.bottom    = "auto";
+    el.style.transform = "none";
+}
+
 // ======================
 // INITIALIZE SINGLE CONTROLS
 // ======================
@@ -177,6 +164,7 @@ function initControls() {
     leftContainer.className = "jump-controls-left";
     makeDraggable(leftContainer);
 
+    // Tombol silang merah
     const closeBtn = document.createElement('button');
     closeBtn.className = "jump-close-btn";
     closeBtn.innerText = "×";
@@ -188,6 +176,7 @@ function initControls() {
     };
     leftContainer.appendChild(closeBtn);
 
+    // Tombol kembalikan (Show)
     const toggleBackBtn = document.createElement('div');
     toggleBackBtn.className = "jump-toggle-back";
     toggleBackBtn.innerText = "▶";
@@ -199,6 +188,7 @@ function initControls() {
     };
     leftContainer.appendChild(toggleBackBtn);
 
+    // Tombol Navigasi
     const btnDefs = [
         { label: "-30", fn: ()=> jump(-30)       },
         { label: "-5",  fn: ()=> jump(-5)        },
@@ -217,6 +207,7 @@ function initControls() {
 
     globalControls = leftContainer;
 
+    // Listener Fullscreen & Resize global
     addFullscreenListener(()=>{
         setTimeout(() => { updatePosition(); }, 150);
     });
@@ -233,6 +224,7 @@ function initControls() {
 function updatePosition() {
     const video = getActiveVideo();
     if (!video) {
+        // Kalau ga ada video aktif, sembunyikan container utama
         if (globalControls && globalControls.parentElement) {
             globalControls.parentElement.removeChild(globalControls);
         }
@@ -245,6 +237,7 @@ function updatePosition() {
     const container = initControls();
     const fs = getFullscreenElement();
 
+    // Pastikan parent video punya position relative supaya tombol presisi
     if (parent.style.position !== 'relative' && parent.style.position !== 'absolute') {
         parent.style.position = 'relative';
     }
@@ -261,19 +254,9 @@ function updatePosition() {
         // Mode Normal (Tempel di parent video yang sedang aktif)
         if (container.parentElement !== parent) {
             parent.appendChild(container);
-
-            // Cek apakah user sudah pernah drag manual sebelumnya?
-            if (lastUserPosition) {
-                // Jika sudah ada koordinat simpanan, gunakan itu alih-alih mereset ke pojok kiri bawah
-                container.style.left   = lastUserPosition.left;
-                container.style.top    = lastUserPosition.top;
-                container.style.bottom = "auto";
-            } else {
-                // Posisi default pertama kali muncul
-                container.style.left   = "20px";
-                container.style.bottom = "40%";
-                container.style.top    = "60%";
-            }
+            container.style.left      = "20px";
+            container.style.bottom    = "8px";
+            container.style.top       = "auto";
         }
     }
 }
@@ -439,7 +422,7 @@ style.innerHTML = `
 document.head.appendChild(style);
 
 // ======================
-// RUNNING LOOP
+// RUNNING LOOP (Smarter Watcher)
 // ======================
 setInterval(updatePosition, 800);
 
