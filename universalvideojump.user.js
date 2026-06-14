@@ -271,8 +271,8 @@ function updatePosition() {
             } else {
                 // Posisi default pertama kali muncul
                 container.style.left   = "20px";
-                container.style.bottom = "8px";
-                container.style.top    = "auto";
+                container.style.bottom = "auto";
+                container.style.top    = "60%";
             }
         }
     }
