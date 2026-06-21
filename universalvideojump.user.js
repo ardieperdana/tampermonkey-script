@@ -1,7 +1,18 @@
+Mantap, kalau di PC udah sempurna berarti pondasi "Barbar Mode"-nya berhasil nembus blokiran si web!
+
+Nah, untuk masalah di HP kenapa gak bisa digeser, ini karena **sifat asli *browser* HP**. Kalau ada elemen web (dalam hal ini *player* videonya) yang ngerasain sentuhan lu, terus si web ngeluarin perintah nge-blokir (*preventDefault*), *browser* HP bakal **otomatis mematikan fitur *touchmove* (geser)** di detik itu juga.
+
+Di versi sebelumnya, gua cuma masang "tameng penangkal sentuhan" di tombol-tombolnya doang, tapi lupa masang tameng di ***background container*-nya** (tempat lu naruh jari buat nge-drag). Alhasil, sentuhan lu nembus ke videonya, dan fungsi gesernya langsung dimatiin sepihak sama si web.
+
+Ini dia **Versi 7.0 (The Perfect Edition)**. Gua udah pasang *tameng* di seluruh inci areanya dan masang status `capture: true` supaya *script* lu **mencuri data sentuhan lebih dulu** sebelum *website* sempet ngerespon.
+
+Sikat jir, langsung timpa!
+
+```javascript
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      6.9
+// @version      7.0
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -88,7 +99,7 @@ function changeVolume(delta){
 }
 
 // ======================
-// DRAG HANDLER
+// DRAG HANDLER (ULTIMATE MOBILE FIX)
 // ======================
 function makeDraggable(el){
     let isDragging = false;
@@ -96,7 +107,7 @@ function makeDraggable(el){
 
     function startDrag(clientX, clientY) {
         el.isCurrentlyDragging = true; 
-        el.style.bottom = ""; // Lepas jangkar bottom
+        el.style.bottom = ""; 
         el.setAttribute('data-dragged', 'true');
         
         startX = clientX;
@@ -121,36 +132,56 @@ function makeDraggable(el){
         if(el) el.isCurrentlyDragging = false; 
     }
 
-    // Mouse Events
+    // --- MOUSE EVENTS ---
     el.addEventListener("mousedown", (e)=>{
         if(e.target.closest('button') || e.target.closest('.jump-toggle-back')) return;
+        e.stopPropagation(); // Blokir event ke player web
         isDragging = true;
         startDrag(e.clientX, e.clientY);
     });
 
     document.addEventListener("mousemove", (e)=>{
         if(!isDragging) return;
+        e.stopPropagation();
         moveDrag(e.clientX, e.clientY);
-    });
+    }, { capture: true }); // Prioritas nangkep event
 
-    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("mouseup", (e) => {
+        if(!isDragging) return;
+        e.stopPropagation();
+        endDrag();
+    }, { capture: true });
 
-    // Touch Events
+    // --- TOUCH EVENTS (HP) ---
     el.addEventListener("touchstart", (e)=>{
         if(e.target.closest('button') || e.target.closest('.jump-toggle-back')) return;
+        
+        // INI KUNCI UTAMANYA: Cegah sentuhan area kosong nembus ke web!
+        e.stopPropagation(); 
+        
         isDragging = true;
         const touch = e.touches[0];
         startDrag(touch.clientX, touch.clientY);
-    }, { passive: true });
+    }, { passive: false });
 
     document.addEventListener("touchmove", (e)=>{
         if(!isDragging) return;
+        
+        // Bantai semua intervensi web player
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         if(e.cancelable) e.preventDefault(); 
+        
         const touch = e.touches[0];
         moveDrag(touch.clientX, touch.clientY);
-    }, { passive: false });
+    }, { passive: false, capture: true }); // Nangkep pergerakan duluan dari root!
 
-    document.addEventListener("touchend", endDrag);
+    document.addEventListener("touchend", (e) => { 
+        if(!isDragging) return;
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        endDrag(); 
+    }, { capture: true });
 }
 
 // ======================
@@ -190,15 +221,6 @@ function initControls() {
     leftContainer.isCurrentlyDragging = false; 
     makeDraggable(leftContainer);
 
-    // Stop sentuhan nyasar/nembus ke website player
-    leftContainer.addEventListener('touchstart', (e) => {
-        if (e.target.closest('button') || e.target.closest('.jump-toggle-back')) {
-            e.stopPropagation();
-        }
-    }, { passive: false });
-    leftContainer.addEventListener('click', (e) => e.stopPropagation());
-    leftContainer.addEventListener('dblclick', (e) => e.stopPropagation());
-
     const closeBtn = document.createElement('button');
     closeBtn.className = "jump-close-btn";
     closeBtn.innerText = "×";
@@ -208,6 +230,7 @@ function initControls() {
         isHiddenByUser = true;
         leftContainer.classList.add('hidden');
     };
+    closeBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
     leftContainer.appendChild(closeBtn);
 
     const toggleBackBtn = document.createElement('div');
@@ -219,6 +242,7 @@ function initControls() {
         isHiddenByUser = false;
         leftContainer.classList.remove('hidden');
     };
+    toggleBackBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
     leftContainer.appendChild(toggleBackBtn);
 
     const btnDefs = [
@@ -234,14 +258,10 @@ function initControls() {
         const btn    = document.createElement('button');
         btn.innerText = label;
         btn.onclick  = (e) => {
-            e.stopPropagation(); // Blokir event ke player web
+            e.stopPropagation();
             fn();
         };
-        // Tambahan tameng untuk mobile
-        btn.addEventListener('touchstart', (e) => {
-            e.stopPropagation(); 
-        }, { passive: false });
-        
+        btn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
         leftContainer.appendChild(btn);
     });
 
@@ -263,7 +283,7 @@ function initControls() {
 }
 
 // ======================
-// MANAGEMENT & RE-ANCHOR LOOP (BARBAR MODE)
+// MANAGEMENT & RE-ANCHOR LOOP
 // ======================
 function updatePosition() {
     const video = getActiveVideo();
@@ -290,7 +310,6 @@ function updatePosition() {
     if (fs) {
         let isNew = !fs.contains(container);
         
-        // AUTO-MAJU: Kalau ada elemen yang niban dari atas, paksa pindah ke paling akhir (paling atas layer)
         if (fs.lastElementChild !== container) {
             fs.appendChild(container); 
         }
@@ -307,7 +326,6 @@ function updatePosition() {
     } else {
         let isNew = container.parentElement !== parent;
         
-        // AUTO-MAJU buat non-fullscreen
         if (parent.lastElementChild !== container) {
             parent.appendChild(container);
         }
@@ -368,7 +386,7 @@ style.innerHTML = `
     max-width: calc(100vw - 24px);
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none; /* Cegah browser rewel pas di-touch */
+    touch-action: none;
 }
 
 .jump-controls-left:active {
@@ -496,3 +514,5 @@ document.head.appendChild(style);
 setInterval(updatePosition, 800);
 
 })();
+
+```
