@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         #day Universal Video Jump
 // @namespace    jump5s
-// @version      7.1
+// @version      7.2
 // @icon         https://images.icon-icons.com/1094/PNG/512/fastforward1_78486.png
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      test-36da0.firebaseio.com
 // @run-at       document-idle
 // @all-frames   true
 // ==/UserScript==
@@ -89,6 +90,71 @@ function changeVolume(delta){
 }
 
 // ======================
+// FIREBASE NOTES FUNCTION
+// ======================
+function saveToNotes(btn) {
+    const video = getActiveVideo();
+    let wasPlaying = false;
+    
+    // Auto-pause video pas lagi ngetik notes
+    if (video && !video.paused) {
+        wasPlaying = true;
+        video.pause();
+    }
+
+    const defaultTitle = document.title || "Video Bagus";
+    const currentUrl = window.location.href;
+
+    const userTitle = prompt("📝 Judul Note:", defaultTitle);
+    if (userTitle === null) {
+        if (wasPlaying) video.play();
+        return;
+    }
+
+    const userContent = prompt("🔗 Isi Note (Link):", currentUrl);
+    if (userContent === null) {
+        if (wasPlaying) video.play();
+        return;
+    }
+
+    if (wasPlaying) video.play();
+
+    const payload = {
+        title: userTitle,
+        content: userContent,
+        timestamp: new Date().toISOString()
+    };
+
+    const originalText = btn.innerText;
+    btn.innerText = "⏳";
+    
+    // Kirim pakai POST supaya Firebase generate push ID otomatis (-OSZY...)
+    GM_xmlhttpRequest({
+        method: "POST",
+        url: "https://test-36da0.firebaseio.com/notes.json",
+        data: JSON.stringify(payload),
+        headers: {
+            "Content-Type": "application/json"
+        },
+        onload: function(res) {
+            if (res.status === 200) {
+                btn.innerText = "✅";
+                setTimeout(() => { btn.innerText = originalText; }, 2000);
+            } else {
+                btn.innerText = "❌";
+                setTimeout(() => { btn.innerText = originalText; }, 2000);
+                alert("Gagal simpan ke Firebase: " + res.statusText);
+            }
+        },
+        onerror: function() {
+            btn.innerText = "❌";
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+            alert("Error koneksi ke Firebase.");
+        }
+    });
+}
+
+// ======================
 // DRAG HANDLER (SMART SENSOR)
 // ======================
 function makeDraggable(el){
@@ -97,7 +163,7 @@ function makeDraggable(el){
 
     function startDrag(clientX, clientY) {
         el.isCurrentlyDragging = true; 
-        el.dataset.hasMoved = 'false'; // Reset status geser
+        el.dataset.hasMoved = 'false'; 
         el.style.bottom = ""; 
         el.setAttribute('data-dragged', 'true');
         
@@ -110,13 +176,10 @@ function makeDraggable(el){
 
     function endDrag() {
         isDragging = false;
-        // Kasih jeda dikit biar klik gak langsung ke-trigger
         setTimeout(() => { if(el) el.isCurrentlyDragging = false; }, 50);
     }
 
-    // --- MOUSE EVENTS ---
     el.addEventListener("mousedown", (e)=>{
-        // Sekarang cuma blokir tombol X dan Toggle. Tombol angka BISA di-drag!
         if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
         e.stopPropagation(); 
         isDragging = true;
@@ -130,7 +193,6 @@ function makeDraggable(el){
         let dx = e.clientX - startX;
         let dy = e.clientY - startY;
         
-        // Sensor: Kalau kursor gerak lebih dari 5px, tandain sebagai "Drag"
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             el.dataset.hasMoved = 'true';
             el.style.left = (initialLeft + dx) + "px";
@@ -145,7 +207,6 @@ function makeDraggable(el){
         endDrag();
     }, { capture: true });
 
-    // --- TOUCH EVENTS (HP) ---
     el.addEventListener("touchstart", (e)=>{
         if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
         e.stopPropagation(); 
@@ -163,10 +224,9 @@ function makeDraggable(el){
         let dx = touch.clientX - startX;
         let dy = touch.clientY - startY;
 
-        // Sensor sentuhan HP (Toleransi 5px)
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             el.dataset.hasMoved = 'true';
-            if(e.cancelable) e.preventDefault(); // Batalin efek klik/scroll dari web
+            if(e.cancelable) e.preventDefault(); 
             
             el.style.left = (initialLeft + dx) + "px";
             el.style.top  = (initialTop + dy) + "px";
@@ -217,7 +277,7 @@ function initControls() {
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
     leftContainer.isCurrentlyDragging = false; 
-    leftContainer.dataset.hasMoved = 'false'; // Menyimpan state drag/klik
+    leftContainer.dataset.hasMoved = 'false'; 
     makeDraggable(leftContainer);
 
     const closeBtn = document.createElement('button');
@@ -244,7 +304,9 @@ function initControls() {
     toggleBackBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
     leftContainer.appendChild(toggleBackBtn);
 
+    // Kumpulan Tombol: Note button ada di index 0 (paling kiri)
     const btnDefs = [
+        { label: "✏️", fn: (btn)=> saveToNotes(btn) }, // Tombol Save to Firebase
         { label: "-30", fn: ()=> jump(-30)       },
         { label: "-5",  fn: ()=> jump(-5)        },
         { label: "♫-",  fn: ()=> changeVolume(-10)},
@@ -259,14 +321,12 @@ function initControls() {
         btn.onclick  = (e) => {
             e.stopPropagation();
             
-            // CEK SENSOR: Kalau barusan lu geser, batalin kliknya!
             if (leftContainer.dataset.hasMoved === 'true') {
                 return;
             }
             
-            fn(); // Kalau cuma di-tap, eksekusi fungsinya
+            fn(btn); 
         };
-        // Biarkan touchstart mengalir ke container supaya bisa di-drag
         leftContainer.appendChild(btn);
     });
 
