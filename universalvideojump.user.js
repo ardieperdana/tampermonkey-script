@@ -1,7 +1,8 @@
 // ==UserScript==
-// @name         Universal Video Jump
+// @name         #day Universal Video Jump
 // @namespace    jump5s
 // @version      7.1
+// @icon         https://images.icon-icons.com/1094/PNG/512/fastforward1_78486.png
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
