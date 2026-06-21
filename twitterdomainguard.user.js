@@ -1,7 +1,8 @@
 // ==UserScript==
-// @name         Firebase Twitter Domain Guard (Normalized + Ultimate Auto Trap)
+// @name         #day Twitter Anti ads Firebase
 // @namespace    twitterFirebaseGuard
 // @version      3.3
+// @icon https://x.com/favicon.ico
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @match        https://twitter.com/*
