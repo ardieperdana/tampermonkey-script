@@ -1,14 +1,3 @@
-Mantap, kalau di PC udah sempurna berarti pondasi "Barbar Mode"-nya berhasil nembus blokiran si web!
-
-Nah, untuk masalah di HP kenapa gak bisa digeser, ini karena **sifat asli *browser* HP**. Kalau ada elemen web (dalam hal ini *player* videonya) yang ngerasain sentuhan lu, terus si web ngeluarin perintah nge-blokir (*preventDefault*), *browser* HP bakal **otomatis mematikan fitur *touchmove* (geser)** di detik itu juga.
-
-Di versi sebelumnya, gua cuma masang "tameng penangkal sentuhan" di tombol-tombolnya doang, tapi lupa masang tameng di ***background container*-nya** (tempat lu naruh jari buat nge-drag). Alhasil, sentuhan lu nembus ke videonya, dan fungsi gesernya langsung dimatiin sepihak sama si web.
-
-Ini dia **Versi 7.0 (The Perfect Edition)**. Gua udah pasang *tameng* di seluruh inci areanya dan masang status `capture: true` supaya *script* lu **mencuri data sentuhan lebih dulu** sebelum *website* sempet ngerespon.
-
-Sikat jir, langsung timpa!
-
-```javascript
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
@@ -514,5 +503,3 @@ document.head.appendChild(style);
 setInterval(updatePosition, 800);
 
 })();
-
-```
