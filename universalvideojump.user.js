@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      6.8
+// @version      6.9
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -96,7 +96,6 @@ function makeDraggable(el){
 
     function startDrag(clientX, clientY) {
         el.isCurrentlyDragging = true; 
-        
         el.style.bottom = ""; // Lepas jangkar bottom
         el.setAttribute('data-dragged', 'true');
         
@@ -191,6 +190,15 @@ function initControls() {
     leftContainer.isCurrentlyDragging = false; 
     makeDraggable(leftContainer);
 
+    // Stop sentuhan nyasar/nembus ke website player
+    leftContainer.addEventListener('touchstart', (e) => {
+        if (e.target.closest('button') || e.target.closest('.jump-toggle-back')) {
+            e.stopPropagation();
+        }
+    }, { passive: false });
+    leftContainer.addEventListener('click', (e) => e.stopPropagation());
+    leftContainer.addEventListener('dblclick', (e) => e.stopPropagation());
+
     const closeBtn = document.createElement('button');
     closeBtn.className = "jump-close-btn";
     closeBtn.innerText = "×";
@@ -225,7 +233,15 @@ function initControls() {
     btnDefs.forEach(({ label, fn }) => {
         const btn    = document.createElement('button');
         btn.innerText = label;
-        btn.onclick  = fn;
+        btn.onclick  = (e) => {
+            e.stopPropagation(); // Blokir event ke player web
+            fn();
+        };
+        // Tambahan tameng untuk mobile
+        btn.addEventListener('touchstart', (e) => {
+            e.stopPropagation(); 
+        }, { passive: false });
+        
         leftContainer.appendChild(btn);
     });
 
@@ -247,7 +263,7 @@ function initControls() {
 }
 
 // ======================
-// MANAGEMENT & RE-ANCHOR LOOP
+// MANAGEMENT & RE-ANCHOR LOOP (BARBAR MODE)
 // ======================
 function updatePosition() {
     const video = getActiveVideo();
@@ -272,26 +288,34 @@ function updatePosition() {
     }
 
     if (fs) {
-        // Mode Fullscreen
-        if (!fs.contains(container)) {
-            fs.appendChild(container);
-            
+        let isNew = !fs.contains(container);
+        
+        // AUTO-MAJU: Kalau ada elemen yang niban dari atas, paksa pindah ke paling akhir (paling atas layer)
+        if (fs.lastElementChild !== container) {
+            fs.appendChild(container); 
+        }
+        
+        if (isNew) {
             if (!container.hasAttribute('data-dragged')) {
                 container.style.left      = "20px";
-                container.style.top       = "calc(50% - 25px)"; // Pindah ke tengah
+                container.style.top       = "calc(50% - 25px)"; 
                 container.style.bottom    = "auto";
             } else {
                 setTimeout(() => clampToBoundary(container), 50);
             }
         }
     } else {
-        // Mode Normal
-        if (container.parentElement !== parent) {
+        let isNew = container.parentElement !== parent;
+        
+        // AUTO-MAJU buat non-fullscreen
+        if (parent.lastElementChild !== container) {
             parent.appendChild(container);
-            
+        }
+        
+        if (isNew) {
             if (!container.hasAttribute('data-dragged')) {
                 container.style.left      = "20px";
-                container.style.top       = "calc(50% - 25px)"; // Pindah ke tengah
+                container.style.top       = "calc(50% - 25px)"; 
                 container.style.bottom    = "auto";
             } else {
                 setTimeout(() => clampToBoundary(container), 50);
@@ -329,7 +353,7 @@ style.innerHTML = `
     gap: 8px;
     position: absolute;
     left: 20px;
-    top: calc(50% - 25px); /* Default di tengah vertikal */
+    top: calc(50% - 25px); 
     bottom: auto;
     transform: none;
     z-index: 2147483647;
@@ -344,6 +368,7 @@ style.innerHTML = `
     max-width: calc(100vw - 24px);
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none; /* Cegah browser rewel pas di-touch */
 }
 
 .jump-controls-left:active {
