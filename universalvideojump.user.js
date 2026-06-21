@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      6.3
+// @version      6.8
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -32,7 +32,7 @@ if (blockedSites.some(site => location.hostname.includes(site))) {
 }
 
 let globalControls = null;
-let isHiddenByUser = false; // Flag biar kalau di-close ga nongol lagi otomatis
+let isHiddenByUser = false; 
 
 // ======================
 // GET ACTIVE VIDEO
@@ -41,11 +41,9 @@ function getActiveVideo(){
     const videos = [...document.querySelectorAll("video")];
     if(videos.length === 0) return null;
 
-    // Cari yang beneran lagi diputar
     let playing = videos.find(v => !v.paused && !v.ended && v.readyState > 2);
     if(playing) return playing;
 
-    // Kalau ga ada yang putar, cari yang paling gede ukurannya di layar
     let biggest = videos.sort((a,b)=>
         (b.offsetWidth*b.offsetHeight)-(a.offsetWidth*a.offsetHeight)
     )[0];
@@ -94,63 +92,91 @@ function changeVolume(delta){
 // ======================
 function makeDraggable(el){
     let isDragging = false;
-    let offsetX, offsetY;
+    let startX, startY, initialLeft, initialTop;
 
+    function startDrag(clientX, clientY) {
+        el.isCurrentlyDragging = true; 
+        
+        el.style.bottom = ""; // Lepas jangkar bottom
+        el.setAttribute('data-dragged', 'true');
+        
+        startX = clientX;
+        startY = clientY;
+        
+        initialLeft = el.offsetLeft;
+        initialTop = el.offsetTop;
+    }
+
+    function moveDrag(clientX, clientY) {
+        if(!isDragging) return;
+        let dx = clientX - startX;
+        let dy = clientY - startY;
+        
+        el.style.left = (initialLeft + dx) + "px";
+        el.style.top  = (initialTop + dy) + "px";
+        el.style.transform = "none";
+    }
+    
+    function endDrag() {
+        isDragging = false;
+        if(el) el.isCurrentlyDragging = false; 
+    }
+
+    // Mouse Events
     el.addEventListener("mousedown", (e)=>{
-        if(e.target.classList.contains('jump-close-btn') || e.target.classList.contains('jump-toggle-back')) return;
+        if(e.target.closest('button') || e.target.closest('.jump-toggle-back')) return;
         isDragging = true;
-        offsetX = e.clientX - el.getBoundingClientRect().left;
-        offsetY = e.clientY - el.getBoundingClientRect().top;
-        e.preventDefault();
+        startDrag(e.clientX, e.clientY);
     });
 
     document.addEventListener("mousemove", (e)=>{
         if(!isDragging) return;
-        el.style.left      = (e.clientX - offsetX) + "px";
-        el.style.top       = (e.clientY - offsetY) + "px";
-        el.style.bottom    = "auto";
-        el.style.transform = "none";
+        moveDrag(e.clientX, e.clientY);
     });
 
-    document.addEventListener("mouseup", () => { isDragging = false; });
+    document.addEventListener("mouseup", endDrag);
 
+    // Touch Events
     el.addEventListener("touchstart", (e)=>{
-        if(e.target.classList.contains('jump-close-btn') || e.target.classList.contains('jump-toggle-back')) return;
+        if(e.target.closest('button') || e.target.closest('.jump-toggle-back')) return;
         isDragging = true;
         const touch = e.touches[0];
-        offsetX = touch.clientX - el.getBoundingClientRect().left;
-        offsetY = touch.clientY - el.getBoundingClientRect().top;
+        startDrag(touch.clientX, touch.clientY);
     }, { passive: true });
 
     document.addEventListener("touchmove", (e)=>{
         if(!isDragging) return;
+        if(e.cancelable) e.preventDefault(); 
         const touch = e.touches[0];
-        el.style.left      = (touch.clientX - offsetX) + "px";
-        el.style.top       = (touch.clientY - offsetY) + "px";
-        el.style.bottom    = "auto";
-        el.style.transform = "none";
-    }, { passive: true });
+        moveDrag(touch.clientX, touch.clientY);
+    }, { passive: false });
 
-    document.addEventListener("touchend", () => { isDragging = false; });
+    document.addEventListener("touchend", endDrag);
 }
 
-function clampToViewport(el){
-    if(!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw   = window.innerWidth;
-    const vh   = window.innerHeight;
+// ======================
+// CLAMP TO BOUNDARY
+// ======================
+function clampToBoundary(el){
+    if(!el || !el.parentElement) return;
 
-    let left = rect.left;
-    let top  = rect.top;
+    const parent = el.parentElement;
+    const pW = parent.clientWidth || window.innerWidth;
+    const pH = parent.clientHeight || window.innerHeight;
 
-    if(left < 0)               left = 4;
-    if(top  < 0)               top  = 4;
-    if(left + rect.width > vw) left = vw - rect.width - 4;
-    if(top + rect.height > vh) top  = vh - rect.height - 4;
+    if(pW === 0 || pH === 0) return; 
 
+    let left = el.offsetLeft;
+    let top  = el.offsetTop;
+
+    if(left < 0) left = 4;
+    if(top  < 0) top  = 4;
+    if(left + el.offsetWidth > pW) left = pW - el.offsetWidth - 4;
+    if(top + el.offsetHeight > pH) top  = pH - el.offsetHeight - 4;
+
+    el.style.bottom    = "";
     el.style.left      = left + "px";
     el.style.top       = top  + "px";
-    el.style.bottom    = "auto";
     el.style.transform = "none";
 }
 
@@ -162,9 +188,9 @@ function initControls() {
 
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
+    leftContainer.isCurrentlyDragging = false; 
     makeDraggable(leftContainer);
 
-    // Tombol silang merah
     const closeBtn = document.createElement('button');
     closeBtn.className = "jump-close-btn";
     closeBtn.innerText = "×";
@@ -176,7 +202,6 @@ function initControls() {
     };
     leftContainer.appendChild(closeBtn);
 
-    // Tombol kembalikan (Show)
     const toggleBackBtn = document.createElement('div');
     toggleBackBtn.className = "jump-toggle-back";
     toggleBackBtn.innerText = "▶";
@@ -188,7 +213,6 @@ function initControls() {
     };
     leftContainer.appendChild(toggleBackBtn);
 
-    // Tombol Navigasi
     const btnDefs = [
         { label: "-30", fn: ()=> jump(-30)       },
         { label: "-5",  fn: ()=> jump(-5)        },
@@ -207,12 +231,16 @@ function initControls() {
 
     globalControls = leftContainer;
 
-    // Listener Fullscreen & Resize global
     addFullscreenListener(()=>{
         setTimeout(() => { updatePosition(); }, 150);
     });
+    
     window.addEventListener("resize", ()=>{
-        setTimeout(() => { clampToViewport(globalControls); }, 200);
+        setTimeout(() => { 
+            if(globalControls && globalControls.hasAttribute('data-dragged') && !globalControls.isCurrentlyDragging){
+                clampToBoundary(globalControls); 
+            }
+        }, 200);
     });
 
     return globalControls;
@@ -224,7 +252,6 @@ function initControls() {
 function updatePosition() {
     const video = getActiveVideo();
     if (!video) {
-        // Kalau ga ada video aktif, sembunyikan container utama
         if (globalControls && globalControls.parentElement) {
             globalControls.parentElement.removeChild(globalControls);
         }
@@ -235,9 +262,11 @@ function updatePosition() {
     if (!parent) return;
 
     const container = initControls();
+    
+    if (container.isCurrentlyDragging) return; 
+
     const fs = getFullscreenElement();
 
-    // Pastikan parent video punya position relative supaya tombol presisi
     if (parent.style.position !== 'relative' && parent.style.position !== 'absolute') {
         parent.style.position = 'relative';
     }
@@ -246,17 +275,27 @@ function updatePosition() {
         // Mode Fullscreen
         if (!fs.contains(container)) {
             fs.appendChild(container);
-            container.style.left      = "12px";
-            container.style.bottom    = "48px";
-            container.style.top       = "auto";
+            
+            if (!container.hasAttribute('data-dragged')) {
+                container.style.left      = "20px";
+                container.style.top       = "calc(50% - 25px)"; // Pindah ke tengah
+                container.style.bottom    = "auto";
+            } else {
+                setTimeout(() => clampToBoundary(container), 50);
+            }
         }
     } else {
-        // Mode Normal (Tempel di parent video yang sedang aktif)
+        // Mode Normal
         if (container.parentElement !== parent) {
             parent.appendChild(container);
-            container.style.left      = "20px";
-            container.style.bottom    = "8px";
-            container.style.top       = "auto";
+            
+            if (!container.hasAttribute('data-dragged')) {
+                container.style.left      = "20px";
+                container.style.top       = "calc(50% - 25px)"; // Pindah ke tengah
+                container.style.bottom    = "auto";
+            } else {
+                setTimeout(() => clampToBoundary(container), 50);
+            }
         }
     }
 }
@@ -267,6 +306,8 @@ function updatePosition() {
 if(!window.jumpListenerAdded){
     window.jumpListenerAdded = true;
     document.addEventListener('keydown', function(e){
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
         if(e.key === "ArrowLeft")  jump(-30);
         if(e.key === "ArrowRight") jump(30);
         if(e.key === ",")          jump(-5);
@@ -287,9 +328,9 @@ style.innerHTML = `
     flex-wrap: nowrap;
     gap: 8px;
     position: absolute;
-    bottom: 8px;
     left: 20px;
-    top: auto;
+    top: calc(50% - 25px); /* Default di tengah vertikal */
+    bottom: auto;
     transform: none;
     z-index: 2147483647;
     padding: 6px 8px;
@@ -301,6 +342,8 @@ style.innerHTML = `
     overflow: visible;
     box-sizing: border-box;
     max-width: calc(100vw - 24px);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .jump-controls-left:active {
@@ -382,19 +425,20 @@ style.innerHTML = `
     align-items: center;
     justify-content: center;
     -webkit-tap-highlight-color: transparent;
-    user-select: none;
 }
 
-.jump-controls-left button:hover,
+.jump-controls-left button:hover {
+    background: rgba(255,255,255,0.3);
+}
+
 .jump-controls-left button:active {
-    background: rgba(255,255,255,0.35);
-    transform: scale(1.1);
+    background: rgba(255,255,255,0.5);
+    transform: scale(0.95);
 }
 
 /* ── MOBILE ── */
 @media (max-width: 768px) {
     .jump-controls-left {
-        bottom: 52px;
         left: 8px;
         gap: 6px;
         padding: 4px 6px;
@@ -422,7 +466,7 @@ style.innerHTML = `
 document.head.appendChild(style);
 
 // ======================
-// RUNNING LOOP (Smarter Watcher)
+// RUNNING LOOP
 // ======================
 setInterval(updatePosition, 800);
 
