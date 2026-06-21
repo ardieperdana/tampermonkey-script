@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Firebase Twitter Domain Guard (Normalized + Ultimate Auto Trap)
 // @namespace    twitterFirebaseGuard
-// @version      3.1
+// @version      3.3
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @match        https://twitter.com/*
@@ -111,7 +111,7 @@
     if (!isTwitter) return;
 
     // 🔥 Load
-    function loadDomains() {
+    function loadDomains(callback) {
         GM_xmlhttpRequest({
             method: "GET",
             url: LIST_URL,
@@ -120,6 +120,8 @@
                     const data = JSON.parse(res.responseText);
                     domainList = data ? Object.values(data) : [];
                     console.log("Loaded Firebase Domains:", domainList);
+                    highlight(); // Langsung eksekusi highlight tiap kelar narik data
+                    if (callback) callback();
                 } catch(e) {
                     console.error(e);
                 }
@@ -144,7 +146,6 @@
             headers: { "Content-Type": "application/json" },
             onload: function() {
                 loadDomains();
-                setTimeout(() => { highlight(); }, 300);
             }
         });
     }
@@ -202,29 +203,70 @@
         }, true);
     }
 
-    // 🔥 Floating Button
-    const btn = document.createElement("div");
-    btn.innerText = "Block Shit Domain";
-    btn.style.cssText = `
+    // ==========================================
+    // 🔥 FLOATING BUTTONS (Container)
+    // ==========================================
+    const btnContainer = document.createElement("div");
+    btnContainer.style.cssText = `
         position:fixed;
         bottom:90px;
         right:320px;
+        display:flex;
+        gap:8px;
+        z-index:999999;
+    `;
+
+    // Tombol Block
+    const btnBlock = document.createElement("div");
+    btnBlock.innerText = "Block Shit Domain";
+    btnBlock.style.cssText = `
         background:#fe6081;
         color:white;
         padding:8px 12px;
         border-radius:8px;
         cursor:pointer;
-        z-index:999999;
         font-size:12px;
+        font-weight:bold;
+        transition: transform 0.1s;
     `;
-
-    btn.onclick = function() {
+    btnBlock.onmousedown = () => btnBlock.style.transform = "scale(0.95)";
+    btnBlock.onmouseup = () => btnBlock.style.transform = "scale(1)";
+    btnBlock.onclick = function() {
         const domain = prompt("Domain?");
         if (!domain) return;
         addDomain(domain.trim());
     };
 
-    document.body.appendChild(btn);
+    // Tombol Reload
+    const btnReload = document.createElement("div");
+    btnReload.innerText = "Reload";
+    btnReload.style.cssText = `
+        background:#fe6081;
+        color:white;
+        padding:8px 12px;
+        border-radius:8px;
+        cursor:pointer;
+        font-size:12px;
+        font-weight:bold;
+        transition: transform 0.1s;
+    `;
+    btnReload.onmousedown = () => btnReload.style.transform = "scale(0.95)";
+    btnReload.onmouseup = () => btnReload.style.transform = "scale(1)";
+    btnReload.onclick = function() {
+        const oriText = btnReload.innerText;
+        btnReload.innerText = "Reloading...";
+        
+        loadDomains(() => {
+            setTimeout(() => {
+                btnReload.innerText = "Done!";
+                setTimeout(() => { btnReload.innerText = oriText; }, 1000);
+            }, 300);
+        });
+    };
+
+    btnContainer.appendChild(btnBlock);
+    btnContainer.appendChild(btnReload);
+    document.body.appendChild(btnContainer);
 
     // 🔥 Mutation Observer
     function observeTimeline() {
