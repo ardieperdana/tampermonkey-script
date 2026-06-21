@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Firebase Twitter Domain Guard (Normalized + Auto Trap)
+// @name         Firebase Twitter Domain Guard (Normalized + Ultimate Auto Trap)
 // @namespace    twitterFirebaseGuard
-// @version      3.0
+// @version      3.1
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/twitterdomainguard.user.js
 // @match        https://twitter.com/*
@@ -9,6 +9,18 @@
 // @match        *://*.shopee.co.id/*
 // @match        *://shopee.co.id/*
 // @match        *://shp.ee/*
+// @match        *://*.tokopedia.com/*
+// @match        *://tokopedia.com/*
+// @match        *://tokopedia.link/*
+// @match        *://*.tiktok.com/*
+// @match        *://tiktok.com/*
+// @match        *://*.blibli.com/*
+// @match        *://blibli.com/*
+// @match        *://blib.li/*
+// @match        *://*.lazada.co.id/*
+// @match        *://lazada.co.id/*
+// @match        *://*.bukalapak.com/*
+// @match        *://bukalapak.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -24,7 +36,25 @@
 
     const hostname = location.hostname.toLowerCase();
     const isTwitter = hostname.includes("twitter.com") || hostname.includes("x.com");
+    
+    // Deteksi e-commerce jebakan
     const isShopee = hostname.includes("shopee") || hostname.includes("shp.ee");
+    const isTokopedia = hostname.includes("tokopedia.com") || hostname.includes("tokopedia.link");
+    const isTiktok = hostname.includes("tiktok.com");
+    const isBlibli = hostname.includes("blibli.com") || hostname.includes("blib.li");
+    const isLazada = hostname.includes("lazada");
+    const isBukalapak = hostname.includes("bukalapak.com");
+    
+    const isTrapSite = isShopee || isTokopedia || isTiktok || isBlibli || isLazada || isBukalapak;
+
+    // Tentukan nama e-commerce buat notifikasi
+    let ecomName = "E-Commerce";
+    if (isShopee) ecomName = "Shopee";
+    else if (isTokopedia) ecomName = "Tokopedia";
+    else if (isTiktok) ecomName = "TikTok";
+    else if (isBlibli) ecomName = "Blibli";
+    else if (isLazada) ecomName = "Lazada";
+    else if (isBukalapak) ecomName = "Bukalapak";
 
     let domainList = [];
 
@@ -43,9 +73,9 @@
     }
 
     // ==========================================
-    // 🛡️ MODE SHOPEE: EKSEKUSI JEBAKAN
+    // 🛡️ MODE E-COMMERCE: EKSEKUSI JEBAKAN
     // ==========================================
-    if (isShopee) {
+    if (isTrapSite) {
         const trap = GM_getValue("pendingTrap", null);
         const now = Date.now();
 
@@ -54,7 +84,7 @@
             const domainAnjing = trap.domain;
             const safeKey = domainAnjing.replace(/\./g, "_");
 
-            console.log("🚨 Kena gocek dari Twitter! Domain biang kerok:", domainAnjing);
+            console.log(`🚨 Kena gocek ke ${ecomName}! Domain biang kerok:`, domainAnjing);
 
             // Tembak langsung ke Firebase
             GM_xmlhttpRequest({
@@ -63,16 +93,15 @@
                 data: JSON.stringify(domainAnjing),
                 headers: { "Content-Type": "application/json" },
                 onload: function() {
-                    alert(`🚨 KENA GOCEK!\nDomain sampah [${domainAnjing}] udah di-auto-block ke Firebase.`);
+                    alert(`🚨 KENA GOCEK KE ${ecomName.toUpperCase()}!\nDomain sampah [${domainAnjing}] udah di-auto-block ke Firebase.`);
                     GM_setValue("pendingTrap", null); // Bersihin memori biar ga loop
                     
-                    // Kalau lu mau tab-nya otomatis ketutup abis kegocek, 
-                    // lu bisa hapus tanda // di bawah ini:
+                    // Hapus tanda // di bawah ini kalau mau auto-close tab pas kegocek
                     // window.close(); 
                 }
             });
         }
-        return; // Setop eksekusi script lebih lanjut biar Shopee gak error
+        return; // Setop eksekusi script lebih lanjut biar web e-commerce gak error
     }
 
 
@@ -150,12 +179,11 @@
 
             let targetDomain = normalizeDomain(a.href);
 
-            // Kalo link aslinya t.co, coba gali teks aslinya (misal: cdn.dodimg.fun)
+            // Kalo link aslinya t.co, coba gali teks aslinya
             if (targetDomain === 't.co') {
                 const textDomain = normalizeDomain(a.innerText);
                 const titleDomain = normalizeDomain(a.title);
 
-                // Prioritaskan domain yang ada di teks kalau itu bukan t.co
                 if (textDomain && textDomain !== 't.co' && textDomain.includes('.')) {
                     targetDomain = textDomain;
                 } else if (titleDomain && titleDomain !== 't.co' && titleDomain.includes('.')) {
@@ -171,7 +199,7 @@
                 });
                 console.log("👀 Intel nyatet domain mencurigakan:", targetDomain);
             }
-        }, true); // Pake mode capture biar nangkep klik sebelum tab baru kebuka
+        }, true);
     }
 
     // 🔥 Floating Button
@@ -210,7 +238,6 @@
         });
     }
 
-    // Eksekusi jalanin semua fungsi
     loadDomains();
     observeClicksForTrap();
     observeTimeline();
