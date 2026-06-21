@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         #day Universal Video Jump
 // @namespace    jump5s
-// @version      7.2
+// @version      7.3
 // @icon         https://images.icon-icons.com/1094/PNG/512/fastforward1_78486.png
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
@@ -122,7 +122,8 @@ function saveToNotes(btn) {
     const payload = {
         title: userTitle,
         content: userContent,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        type: "tampermonkey_video"
     };
 
     const originalText = btn.innerText;
