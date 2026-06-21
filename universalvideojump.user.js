@@ -399,7 +399,7 @@ function updatePosition() {
         if (isNew) {
             if (!container.hasAttribute('data-dragged')) {
                 container.style.left      = "20px";
-                container.style.top       = "calc(65% - 25px)"; 
+                container.style.top       = "calc(80% - 25px)"; 
                 container.style.bottom    = "auto";
             } else {
                 setTimeout(() => clampToBoundary(container), 50);
@@ -437,7 +437,7 @@ style.innerHTML = `
     gap: 8px;
     position: absolute;
     left: 20px;
-    top: calc(65% - 25px); 
+    top: calc(80% - 25px); 
     bottom: auto;
     transform: none;
     z-index: 2147483647;
