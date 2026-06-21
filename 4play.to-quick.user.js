@@ -1,7 +1,8 @@
 // ==UserScript==
-// @name         4Play AUTO (GODMODE VERSION)
+// @name         #day 4Play AUTO (GODMODE VERSION)
 // @namespace    ardie
 // @version      7.0
+// @icon         https://4play.to/assets/logo-gafv6ktz.png
 // @match        *://4play.to/koleksi/*
 // @match        *://4play.to/*
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/4play.to-quick.user.js
