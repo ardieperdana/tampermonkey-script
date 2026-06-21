@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Universal Video Jump
 // @namespace    jump5s
-// @version      7.0
+// @version      7.1
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @match        *://*/*
@@ -88,7 +88,7 @@ function changeVolume(delta){
 }
 
 // ======================
-// DRAG HANDLER (ULTIMATE MOBILE FIX)
+// DRAG HANDLER (SMART SENSOR)
 // ======================
 function makeDraggable(el){
     let isDragging = false;
@@ -96,6 +96,7 @@ function makeDraggable(el){
 
     function startDrag(clientX, clientY) {
         el.isCurrentlyDragging = true; 
+        el.dataset.hasMoved = 'false'; // Reset status geser
         el.style.bottom = ""; 
         el.setAttribute('data-dragged', 'true');
         
@@ -106,25 +107,17 @@ function makeDraggable(el){
         initialTop = el.offsetTop;
     }
 
-    function moveDrag(clientX, clientY) {
-        if(!isDragging) return;
-        let dx = clientX - startX;
-        let dy = clientY - startY;
-        
-        el.style.left = (initialLeft + dx) + "px";
-        el.style.top  = (initialTop + dy) + "px";
-        el.style.transform = "none";
-    }
-    
     function endDrag() {
         isDragging = false;
-        if(el) el.isCurrentlyDragging = false; 
+        // Kasih jeda dikit biar klik gak langsung ke-trigger
+        setTimeout(() => { if(el) el.isCurrentlyDragging = false; }, 50);
     }
 
     // --- MOUSE EVENTS ---
     el.addEventListener("mousedown", (e)=>{
-        if(e.target.closest('button') || e.target.closest('.jump-toggle-back')) return;
-        e.stopPropagation(); // Blokir event ke player web
+        // Sekarang cuma blokir tombol X dan Toggle. Tombol angka BISA di-drag!
+        if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
+        e.stopPropagation(); 
         isDragging = true;
         startDrag(e.clientX, e.clientY);
     });
@@ -132,8 +125,18 @@ function makeDraggable(el){
     document.addEventListener("mousemove", (e)=>{
         if(!isDragging) return;
         e.stopPropagation();
-        moveDrag(e.clientX, e.clientY);
-    }, { capture: true }); // Prioritas nangkep event
+        
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+        
+        // Sensor: Kalau kursor gerak lebih dari 5px, tandain sebagai "Drag"
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            el.dataset.hasMoved = 'true';
+            el.style.left = (initialLeft + dx) + "px";
+            el.style.top  = (initialTop + dy) + "px";
+            el.style.transform = "none";
+        }
+    }, { capture: true });
 
     document.addEventListener("mouseup", (e) => {
         if(!isDragging) return;
@@ -143,11 +146,8 @@ function makeDraggable(el){
 
     // --- TOUCH EVENTS (HP) ---
     el.addEventListener("touchstart", (e)=>{
-        if(e.target.closest('button') || e.target.closest('.jump-toggle-back')) return;
-        
-        // INI KUNCI UTAMANYA: Cegah sentuhan area kosong nembus ke web!
+        if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
         e.stopPropagation(); 
-        
         isDragging = true;
         const touch = e.touches[0];
         startDrag(touch.clientX, touch.clientY);
@@ -155,15 +155,23 @@ function makeDraggable(el){
 
     document.addEventListener("touchmove", (e)=>{
         if(!isDragging) return;
-        
-        // Bantai semua intervensi web player
         e.stopPropagation();
         e.stopImmediatePropagation();
-        if(e.cancelable) e.preventDefault(); 
         
         const touch = e.touches[0];
-        moveDrag(touch.clientX, touch.clientY);
-    }, { passive: false, capture: true }); // Nangkep pergerakan duluan dari root!
+        let dx = touch.clientX - startX;
+        let dy = touch.clientY - startY;
+
+        // Sensor sentuhan HP (Toleransi 5px)
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            el.dataset.hasMoved = 'true';
+            if(e.cancelable) e.preventDefault(); // Batalin efek klik/scroll dari web
+            
+            el.style.left = (initialLeft + dx) + "px";
+            el.style.top  = (initialTop + dy) + "px";
+            el.style.transform = "none";
+        }
+    }, { passive: false, capture: true });
 
     document.addEventListener("touchend", (e) => { 
         if(!isDragging) return;
@@ -208,6 +216,7 @@ function initControls() {
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
     leftContainer.isCurrentlyDragging = false; 
+    leftContainer.dataset.hasMoved = 'false'; // Menyimpan state drag/klik
     makeDraggable(leftContainer);
 
     const closeBtn = document.createElement('button');
@@ -248,9 +257,15 @@ function initControls() {
         btn.innerText = label;
         btn.onclick  = (e) => {
             e.stopPropagation();
-            fn();
+            
+            // CEK SENSOR: Kalau barusan lu geser, batalin kliknya!
+            if (leftContainer.dataset.hasMoved === 'true') {
+                return;
+            }
+            
+            fn(); // Kalau cuma di-tap, eksekusi fungsinya
         };
-        btn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+        // Biarkan touchstart mengalir ke container supaya bisa di-drag
         leftContainer.appendChild(btn);
     });
 
