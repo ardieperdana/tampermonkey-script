@@ -1,5 +1,6 @@
 // ==UserScript==
-// @name         HeavenlyDistrict Manual Auto + Anti Adblock GODMODE
+// @name         #day HeavenlyDistrict Auto + Anti Adblock
+// @icon         https://heavenlydistrict.vip/assets/logo-gfyiumpz.png
 // @namespace    http://tampermonkey.net/
 // @version      5.2
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/heavenlydistrict-quick.user.js
