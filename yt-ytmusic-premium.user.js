@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         #day Youtube & YT Music Premium Logo
-// @namespace    ardie
+// @namespace    ardieperdana
 // @version      3.0.0
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @updateURL    https://img.statically.io/gh/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
@@ -31,9 +31,9 @@
         }
     };
 
-    /* =======================================================
-       YOUTUBE
-       ======================================================= */
+/* =======================================================
+YOUTUBE
+======================================================= */
 
     function initYoutube() {
 
@@ -61,9 +61,9 @@
         document.head.append(style);
     }
 
-    /* =======================================================
-       YOUTUBE MUSIC
-       ======================================================= */
+/* =======================================================
+YOUTUBE MUSIC
+======================================================= */
 
 function initMusic() {
     const logo = document.querySelector("ytmusic-logo");
