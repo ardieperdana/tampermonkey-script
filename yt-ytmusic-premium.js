@@ -3,8 +3,8 @@
 // @namespace    hardie
 // @version      3.0.0
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
-// @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.js
-// @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.js
+// @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
+// @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
 // @description  Premium logo for YouTube & YouTube Music
 // @match        https://www.youtube.com/*
 // @match        https://music.youtube.com/*
