@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         #day Youtube & YT Music Premium Logo
 // @namespace    ardieperdana
-// @version      3.0.0
+// @version      3.0.1
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @updateURL    https://img.statically.io/gh/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
 // @downloadURL  https://img.statically.io/gh/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
@@ -15,7 +15,7 @@
     'use strict';
 
 /* =======================================================
-LOGOS
+LOGO (svg&xml)
 ======================================================= */
 
     const LOGO = {
