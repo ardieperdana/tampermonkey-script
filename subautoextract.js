@@ -3,6 +3,8 @@
 // @namespace    https://github.com/day
 // @version      1.2
 // @icon         https://cdn-icons-png.flaticon.com/512/2876/2876107.png
+// @updateURL    https://img.statically.io/gh/ardieperdana/tampermonkey-script/main/subautoextract.user.js
+// @downloadURL  https://img.statically.io/gh/ardieperdana/tampermonkey-script/main/subautoextract.user.js
 // @description  Download subtitle langsung tanpa ZIP (Subsource + SubDL)
 // @author       day
 // @match        https://subsource.net/subtitle/*
