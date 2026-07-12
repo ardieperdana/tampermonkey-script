@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         #day Youtube & YT Music Premium Logo
-// @namespace    hardie
+// @namespace    ardie
 // @version      3.0.0
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
-// @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
-// @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
+// @updateURL    https://img.statically.io/gh/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
+// @downloadURL  https://img.statically.io/gh/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.user.js
 // @description  Premium logo for YouTube & YouTube Music
 // @match        https://www.youtube.com/*
 // @match        https://music.youtube.com/*
