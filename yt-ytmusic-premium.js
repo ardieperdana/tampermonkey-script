@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         #day Youtube & YT Music Premium Logo
-// @namespace    https://github.com/ardie
+// @namespace    hardie
 // @version      3.0.0
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/yt-ytmusic-premium.js
