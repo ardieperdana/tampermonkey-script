@@ -2,13 +2,10 @@
 // @name         #day HeavenlyDistrict Auto + Anti Adblock
 // @icon         https://heavenlydistrict.vip/assets/logo-gfyiumpz.png
 // @namespace    http://tampermonkey.net/
-// @version      5.2
+// @version      5.3
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/heavenlydistrict-quick.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/heavenlydistrict-quick.user.js
 // @match        https://heavenlydistrict.vip/d/*
-// @match        https://heavenlydistrict.vip/blog/*
-// @match        https://heavenlydistrict.vip/u/*
-// @match        https://heavenlydistrict.vip/
 // @grant        none
 // @run-at       document-start
 // ==/UserScript==
@@ -72,31 +69,17 @@
     // 2. TEMPLATE KOMENTAR
     // ==========================================
     const templates = [
-        "Ini yang gua cari-cari, save dulu ya", "Gila keren sih, gua download dulu",
-        "Makasih banget udah share, kepake nih", "Ini legit banget, gua simpen dulu",
-        "Mantap parah, izin ambil ya bro", "Wah dapet harta karun nih, thanks ya",
-        "Nice banget ini, langsung gua amankan", "Ini sih legit, thanks banyak bro",
-        "Akhirnya nemu juga, langsung save", "Mantap, ini yang gua butuhin",
-        "Wah jarang ada yang share beginian", "Auto download ini mah",
-        "Keren sih, langsung masuk koleksi", "Ini sih wajib disimpen",
-        "Thanks ya, kepake banget ini", "Baru nemu, langsung gas download",
-        "Mantap banget share-nya", "Ini sih gak boleh kelewat",
-        "Wah mantap, langsung gua ambil", "Ini yang gua cari dari kemarin",
-        "Gila ini lengkap banget", "Auto save sebelum hilang",
-        "Keren banget sih, makasih ya", "Ini sih rare banget",
-        "Langsung masuk bookmark", "Thanks bro, ini berguna banget",
-        "Mantap jiwa, langsung download", "Ini sih fix disimpen",
-        "Gak nyangka nemu ini disini", "Langsung gua koleksiin",
-        "Ini sih gacor banget", "Keren parah, thanks share-nya",
-        "Langsung amankan sebelum ilang", "Ini sih premium banget",
-        "Mantap share beginian", "Fix ini gua download sekarang",
-        "Cakep banget ini, langsung gua download", "Gua bookmark dulu sebelum ilang",
-        "Keren sih ini, makasih banyak ya", "Pas banget lagi butuh, saved dulu",
-        "Baru nemu ini, langsung gua simpen", "Wah ini kepake banget sih, thanks ya",
-        "Gua ambil dulu ya, siapa tau kepake", "Ini sih wajib save",
-        "Makasih ya, jarang ada yang share beginian", "Pas banget nemunya, gua download dulu",
-        "Keren banget sih, gua amankan dulu", "Ini beneran ngebantu, makasih ya",
-        "Gua simpen dulu sebelum lupa", "Wah mantep, langsung gua pake nih"
+"Izin sedot gan, sekalian manasin supra bapak", "Jejak dulu gan, sambil ganti oli gardan Megapro",
+"Mantap share-nya, kebetulan lagi nyari kampas rem Vario", "Langsung download, tapi bentar ngecek ban serep Pajero Sport dulu",
+"Wah dapet harta karun nih, tuker tambah sama spion Scoopy kiri bisa gan?", "Izin amankan file, mumpung karburator RX King lagi dibersihin",
+"Mantap gan, langsung gua save di kalkulator Casio", "Izin comot gan, mau gua burning ke disket",
+"Makasih ya, lumayan file-nya buat ganjel pintu kulkas", "File-nya aman kan gan? Gak bikin kipas angin di rumah muter kebalik?",
+"Izin download, mau gua print terus gua tempel di ruang tamu", "Izin download gan, mau ngecek ada khodamnya apa enggak",
+"Save dulu dah, nunggu tukang siomay lewat baru berani buka", "Download sekarang sebelum di-take down sama RT setempat",
+"Gua amankan dulu, nunggu gerhana matahari total baru berani di-ekstrak", "Mantap jiwa, sembur air yasin dulu biar file-nya gak corrupt",
+"Sedot dulu gan, kebetulan Indomie kuah gua udah mateng", "Makasih link-nya, semoga bapak lu menang lomba burung kicau tingkat RW",
+"Izin save, nunggu kucing gua beranak kembar tiga baru buka password rar", "Keren parah, langsung gua download sambil kayang",
+"Akhirnya nemu juga, otw nyeduh tolak angin pake es batu"
     ];
 
     function getRandomTemplate() {
