@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         #day Universal Video Jump
 // @namespace    jump5s
-// @version      7.3
+// @version      7.4
 // @icon         https://images.icon-icons.com/1094/PNG/512/fastforward1_78486.png
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
@@ -34,7 +34,6 @@ if (blockedSites.some(site => location.hostname.includes(site))) {
 }
 
 let globalControls = null;
-let isHiddenByUser = false; 
 
 // ======================
 // GET ACTIVE VIDEO
@@ -95,7 +94,7 @@ function changeVolume(delta){
 function saveToNotes(btn) {
     const video = getActiveVideo();
     let wasPlaying = false;
-    
+
     // Auto-pause video pas lagi ngetik notes
     if (video && !video.paused) {
         wasPlaying = true;
@@ -106,7 +105,8 @@ function saveToNotes(btn) {
     const currentUrl = window.location.href;
 
     const userTitle = prompt("📝 Judul Note:", defaultTitle);
-    if (userTitle === null) {
+    // Bug fix: tolak judul kosong (cuma spasi juga gak boleh)
+    if (userTitle === null || !userTitle.trim()) {
         if (wasPlaying) video.play();
         return;
     }
@@ -120,7 +120,7 @@ function saveToNotes(btn) {
     if (wasPlaying) video.play();
 
     const payload = {
-        title: userTitle,
+        title: userTitle.trim(),
         content: userContent,
         timestamp: new Date().toISOString(),
         type: "tampermonkey_video"
@@ -128,7 +128,7 @@ function saveToNotes(btn) {
 
     const originalText = btn.innerText;
     btn.innerText = "⏳";
-    
+
     // Kirim pakai POST supaya Firebase generate push ID otomatis (-OSZY...)
     GM_xmlhttpRequest({
         method: "POST",
@@ -138,7 +138,14 @@ function saveToNotes(btn) {
             "Content-Type": "application/json"
         },
         onload: function(res) {
-            if (res.status === 200) {
+            // Bug fix: cek beneran sukses dari push ID yang Firebase balikin
+            let ok = false;
+            try {
+                const data = JSON.parse(res.responseText || "{}");
+                ok = res.status === 200 && !!data.name;
+            } catch(_) {}
+
+            if (ok) {
                 btn.innerText = "✅";
                 setTimeout(() => { btn.innerText = originalText; }, 2000);
             } else {
@@ -163,14 +170,14 @@ function makeDraggable(el){
     let startX, startY, initialLeft, initialTop;
 
     function startDrag(clientX, clientY) {
-        el.isCurrentlyDragging = true; 
-        el.dataset.hasMoved = 'false'; 
-        el.style.bottom = ""; 
+        el.isCurrentlyDragging = true;
+        el.dataset.hasMoved = 'false';
+        el.style.bottom = "";
         el.setAttribute('data-dragged', 'true');
-        
+
         startX = clientX;
         startY = clientY;
-        
+
         initialLeft = el.offsetLeft;
         initialTop = el.offsetTop;
     }
@@ -182,7 +189,7 @@ function makeDraggable(el){
 
     el.addEventListener("mousedown", (e)=>{
         if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
-        e.stopPropagation(); 
+        e.stopPropagation();
         isDragging = true;
         startDrag(e.clientX, e.clientY);
     });
@@ -190,10 +197,10 @@ function makeDraggable(el){
     document.addEventListener("mousemove", (e)=>{
         if(!isDragging) return;
         e.stopPropagation();
-        
+
         let dx = e.clientX - startX;
         let dy = e.clientY - startY;
-        
+
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             el.dataset.hasMoved = 'true';
             el.style.left = (initialLeft + dx) + "px";
@@ -210,7 +217,7 @@ function makeDraggable(el){
 
     el.addEventListener("touchstart", (e)=>{
         if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
-        e.stopPropagation(); 
+        e.stopPropagation();
         isDragging = true;
         const touch = e.touches[0];
         startDrag(touch.clientX, touch.clientY);
@@ -220,26 +227,26 @@ function makeDraggable(el){
         if(!isDragging) return;
         e.stopPropagation();
         e.stopImmediatePropagation();
-        
+
         const touch = e.touches[0];
         let dx = touch.clientX - startX;
         let dy = touch.clientY - startY;
 
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             el.dataset.hasMoved = 'true';
-            if(e.cancelable) e.preventDefault(); 
-            
+            if(e.cancelable) e.preventDefault();
+
             el.style.left = (initialLeft + dx) + "px";
             el.style.top  = (initialTop + dy) + "px";
             el.style.transform = "none";
         }
     }, { passive: false, capture: true });
 
-    document.addEventListener("touchend", (e) => { 
+    document.addEventListener("touchend", (e) => {
         if(!isDragging) return;
         e.stopPropagation();
         e.stopImmediatePropagation();
-        endDrag(); 
+        endDrag();
     }, { capture: true });
 }
 
@@ -253,15 +260,15 @@ function clampToBoundary(el){
     const pW = parent.clientWidth || window.innerWidth;
     const pH = parent.clientHeight || window.innerHeight;
 
-    if(pW === 0 || pH === 0) return; 
+    if(pW === 0 || pH === 0) return;
 
     let left = el.offsetLeft;
     let top  = el.offsetTop;
 
     if(left < 0) left = 4;
-    if(top  < 0) top  = 4;
+    if(top  < 0) top = 4;
     if(left + el.offsetWidth > pW) left = pW - el.offsetWidth - 4;
-    if(top + el.offsetHeight > pH) top  = pH - el.offsetHeight - 4;
+    if(top + el.offsetHeight > pH) top = pH - el.offsetHeight - 4;
 
     el.style.bottom    = "";
     el.style.left      = left + "px";
@@ -277,8 +284,8 @@ function initControls() {
 
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
-    leftContainer.isCurrentlyDragging = false; 
-    leftContainer.dataset.hasMoved = 'false'; 
+    leftContainer.isCurrentlyDragging = false;
+    leftContainer.dataset.hasMoved = 'false';
     makeDraggable(leftContainer);
 
     const closeBtn = document.createElement('button');
@@ -287,7 +294,6 @@ function initControls() {
     closeBtn.title = "Sembunyikan";
     closeBtn.onclick = (e) => {
         e.stopPropagation();
-        isHiddenByUser = true;
         leftContainer.classList.add('hidden');
     };
     closeBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
@@ -299,48 +305,59 @@ function initControls() {
     toggleBackBtn.title = "Tampilkan Kontrol";
     toggleBackBtn.onclick = (e) => {
         e.stopPropagation();
-        isHiddenByUser = false;
         leftContainer.classList.remove('hidden');
     };
     toggleBackBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
     leftContainer.appendChild(toggleBackBtn);
 
-    // Kumpulan Tombol: Note button ada di index 0 (paling kiri)
-    const btnDefs = [
-        { label: "✏️", fn: (btn)=> saveToNotes(btn) }, // Tombol Save to Firebase
-        { label: "-30", fn: ()=> jump(-30)       },
-        { label: "-5",  fn: ()=> jump(-5)        },
-        { label: "♫-",  fn: ()=> changeVolume(-10)},
-        { label: "♫+",  fn: ()=> changeVolume(10) },
-        { label: "+5",  fn: ()=> jump(5)         },
-        { label: "+30", fn: ()=> jump(30)        },
+    // Helper bikin tombol biar nggak repetisi
+    function makeButton(label, fn) {
+        const btn = document.createElement('button');
+        btn.innerText = label;
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            if (leftContainer.dataset.hasMoved === 'true') return;
+            fn(btn);
+        };
+        return btn;
+    }
+
+    // Layout baru, 2 baris:
+    //   Baris atas:  ✏️  ♫-  ♫+
+    //   Baris bawah: -30 -5 +5 +30
+    const rowTopDefs = [
+        { label: "✎", fn: (btn)=> saveToNotes(btn) },
+        { label: "♫-", fn: ()=> changeVolume(-10) },
+        { label: "♫+", fn: ()=> changeVolume(10)  },
     ];
 
-    btnDefs.forEach(({ label, fn }) => {
-        const btn    = document.createElement('button');
-        btn.innerText = label;
-        btn.onclick  = (e) => {
-            e.stopPropagation();
-            
-            if (leftContainer.dataset.hasMoved === 'true') {
-                return;
-            }
-            
-            fn(btn); 
-        };
-        leftContainer.appendChild(btn);
-    });
+    const rowBotDefs = [
+        { label: "-30", fn: ()=> jump(-30) },
+        { label: "-5",  fn: ()=> jump(-5)  },
+        { label: "+5",  fn: ()=> jump(5)   },
+        { label: "+30", fn: ()=> jump(30)  },
+    ];
+
+    const rowTop = document.createElement('div');
+    rowTop.className = "jump-row";
+    rowTopDefs.forEach(({ label, fn }) => rowTop.appendChild(makeButton(label, fn)));
+    leftContainer.appendChild(rowTop);
+
+    const rowBot = document.createElement('div');
+    rowBot.className = "jump-row";
+    rowBotDefs.forEach(({ label, fn }) => rowBot.appendChild(makeButton(label, fn)));
+    leftContainer.appendChild(rowBot);
 
     globalControls = leftContainer;
 
     addFullscreenListener(()=>{
         setTimeout(() => { updatePosition(); }, 150);
     });
-    
+
     window.addEventListener("resize", ()=>{
-        setTimeout(() => { 
+        setTimeout(() => {
             if(globalControls && globalControls.hasAttribute('data-dragged') && !globalControls.isCurrentlyDragging){
-                clampToBoundary(globalControls); 
+                clampToBoundary(globalControls);
             }
         }, 200);
     });
@@ -364,8 +381,8 @@ function updatePosition() {
     if (!parent) return;
 
     const container = initControls();
-    
-    if (container.isCurrentlyDragging) return; 
+
+    if (container.isCurrentlyDragging) return;
 
     const fs = getFullscreenElement();
 
@@ -375,15 +392,15 @@ function updatePosition() {
 
     if (fs) {
         let isNew = !fs.contains(container);
-        
+
         if (fs.lastElementChild !== container) {
-            fs.appendChild(container); 
+            fs.appendChild(container);
         }
-        
+
         if (isNew) {
             if (!container.hasAttribute('data-dragged')) {
                 container.style.left      = "20px";
-                container.style.top       = "calc(50% - 25px)"; 
+                container.style.top       = "calc(50% - 25px)";
                 container.style.bottom    = "auto";
             } else {
                 setTimeout(() => clampToBoundary(container), 50);
@@ -391,15 +408,15 @@ function updatePosition() {
         }
     } else {
         let isNew = container.parentElement !== parent;
-        
+
         if (parent.lastElementChild !== container) {
             parent.appendChild(container);
         }
-        
+
         if (isNew) {
             if (!container.hasAttribute('data-dragged')) {
                 container.style.left      = "20px";
-                container.style.top       = "calc(80% - 25px)"; 
+                container.style.top       = "calc(50% - 25px)";
                 container.style.bottom    = "auto";
             } else {
                 setTimeout(() => clampToBoundary(container), 50);
@@ -432,12 +449,13 @@ const style = document.createElement("style");
 style.innerHTML = `
 .jump-controls-left {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 6px;
     position: absolute;
     left: 20px;
-    top: calc(80% - 25px); 
+    top: calc(50% - 25px);
     bottom: auto;
     transform: none;
     z-index: 2147483647;
@@ -457,6 +475,13 @@ style.innerHTML = `
 
 .jump-controls-left:active {
     cursor: grabbing;
+}
+
+.jump-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    justify-content: center;
 }
 
 .jump-close-btn {
@@ -549,8 +574,12 @@ style.innerHTML = `
 @media (max-width: 768px) {
     .jump-controls-left {
         left: 8px;
-        gap: 6px;
+        gap: 5px;
         padding: 4px 6px;
+    }
+
+    .jump-row {
+        gap: 5px;
     }
 
     .jump-controls-left button {
