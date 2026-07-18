@@ -25,6 +25,7 @@ const blockedSites = [
     "daysignature.my.id",
     "chatgpt.com",
     "outlook.com",
+    "olx.co.id",
     "tiktok.com"
 ];
 
