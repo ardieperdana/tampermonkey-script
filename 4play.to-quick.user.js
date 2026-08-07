@@ -46,13 +46,13 @@ const isDetailPage = () => {
     // 2. TEMPLATE KOMENTAR
     // ==========================================
     const templates = [
-        "Ini yang gua cari-cari, save dulu ya", "Mantap admin",
+        "Ini yang gua cari-cari, save dulu ya", "Mantap admin", "terima kasih banyak pak",
         "Gila keren sih, gua download dulu", "Makasih banget udah share, kepake nih",
         "Ini legit banget, gua simpen dulu", "Mantap parah, izin ambil ya bro",
         "Wah dapet harta karun nih, thanks ya", "Nice banget ini, langsung gua amankan",
         "Ini sih legit, thanks banyak bro", "Akhirnya nemu juga, langsung save",
         "Mantap, ini yang gua butuhin", "Wah jarang ada yang share beginian",
-        "Auto download ini mah", "Keren sih, langsung masuk koleksi",
+        "Auto download ini mah", "Keren sih, langsung masuk koleksi", "izin analisa",
         "Ini sih wajib disimpen", "Thanks ya, kepake banget ini",
         "Baru nemu, langsung gas download", "Mantap banget share-nya",
         "Ini sih gak boleh kelewat", "Wah mantap, langsung gua ambil",
