@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         #day Universal Video Jump
 // @namespace    jump5s
-// @version      7.4
+// @version      7.5
 // @icon         https://images.icon-icons.com/1094/PNG/512/fastforward1_78486.png
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
@@ -14,6 +14,11 @@
 
 (function() {
 'use strict';
+
+// ======================
+// DETEKSI DEVICE (HP atau PC)
+// ======================
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // ======================
 // DOMAIN BLACKLIST
@@ -285,6 +290,12 @@ function initControls() {
 
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
+
+    // ✅ MODIFIKASI: Jika bukan HP (berarti PC), langsung minimize (hidden)
+    if (!isMobile) {
+        leftContainer.classList.add('hidden');
+    }
+
     leftContainer.isCurrentlyDragging = false;
     leftContainer.dataset.hasMoved = 'false';
     makeDraggable(leftContainer);
@@ -323,9 +334,6 @@ function initControls() {
         return btn;
     }
 
-    // Layout baru, 2 baris:
-    //   Baris atas:  ✏️  ♫-  ♫+
-    //   Baris bawah: -30 -5 +5 +30
     const rowTopDefs = [
         { label: "✎", fn: (btn)=> saveToNotes(btn) },
         { label: "♫-", fn: ()=> changeVolume(-10) },
