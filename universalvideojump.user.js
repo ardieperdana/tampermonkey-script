@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         #day Universal Video Jump
 // @namespace    jump5s
-// @version      7.5
+// @version      8.1
 // @icon         https://images.icon-icons.com/1094/PNG/512/fastforward1_78486.png
 // @updateURL    https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
 // @downloadURL  https://raw.githubusercontent.com/ardieperdana/tampermonkey-script/main/universalvideojump.user.js
@@ -40,6 +40,10 @@ if (blockedSites.some(site => location.hostname.includes(site))) {
 }
 
 let globalControls = null;
+let currentMode = 0; 
+// Mode 0: Tampil semua (Bookmark, Vol, -30, -5, +5, +30)
+// Mode 1: Cuma -5 & +5
+// Mode 2: Cuma -30, -5, +5, +30
 
 // ======================
 // GET ACTIVE VIDEO
@@ -101,7 +105,6 @@ function saveToNotes(btn) {
     const video = getActiveVideo();
     let wasPlaying = false;
 
-    // Auto-pause video pas lagi ngetik notes
     if (video && !video.paused) {
         wasPlaying = true;
         video.pause();
@@ -111,7 +114,6 @@ function saveToNotes(btn) {
     const currentUrl = window.location.href;
 
     const userTitle = prompt("📝 Judul Note:", defaultTitle);
-    // Bug fix: tolak judul kosong (cuma spasi juga gak boleh)
     if (userTitle === null || !userTitle.trim()) {
         if (wasPlaying) video.play();
         return;
@@ -135,7 +137,6 @@ function saveToNotes(btn) {
     const originalText = btn.innerText;
     btn.innerText = "⏳";
 
-    // Kirim pakai POST supaya Firebase generate push ID otomatis (-OSZY...)
     GM_xmlhttpRequest({
         method: "POST",
         url: "https://test-36da0.firebaseio.com/notes.json",
@@ -144,7 +145,6 @@ function saveToNotes(btn) {
             "Content-Type": "application/json"
         },
         onload: function(res) {
-            // Bug fix: cek beneran sukses dari push ID yang Firebase balikin
             let ok = false;
             try {
                 const data = JSON.parse(res.responseText || "{}");
@@ -194,7 +194,7 @@ function makeDraggable(el){
     }
 
     el.addEventListener("mousedown", (e)=>{
-        if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
+        if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back') || e.target.closest('.jump-switch-btn')) return;
         e.stopPropagation();
         isDragging = true;
         startDrag(e.clientX, e.clientY);
@@ -222,7 +222,7 @@ function makeDraggable(el){
     }, { capture: true });
 
     el.addEventListener("touchstart", (e)=>{
-        if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back')) return;
+        if(e.target.closest('.jump-close-btn') || e.target.closest('.jump-toggle-back') || e.target.closest('.jump-switch-btn')) return;
         e.stopPropagation();
         isDragging = true;
         const touch = e.touches[0];
@@ -291,7 +291,6 @@ function initControls() {
     const leftContainer = document.createElement('div');
     leftContainer.className = "jump-controls-left";
 
-    // ✅ MODIFIKASI: Jika bukan HP (berarti PC), langsung minimize (hidden)
     if (!isMobile) {
         leftContainer.classList.add('hidden');
     }
@@ -300,6 +299,7 @@ function initControls() {
     leftContainer.dataset.hasMoved = 'false';
     makeDraggable(leftContainer);
 
+    // CLOSE / MINIMIZE BUTTON
     const closeBtn = document.createElement('button');
     closeBtn.className = "jump-close-btn";
     closeBtn.innerText = "×";
@@ -311,6 +311,20 @@ function initControls() {
     closeBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
     leftContainer.appendChild(closeBtn);
 
+    // SWITCH MODE BUTTON
+    const switchBtn = document.createElement('button');
+    switchBtn.className = "jump-switch-btn";
+    switchBtn.innerText = "🔄";
+    switchBtn.title = "Ganti Mode Tombol";
+    switchBtn.onclick = (e) => {
+        e.stopPropagation();
+        currentMode = (currentMode + 1) % 3;
+        updateButtonVisibility();
+    };
+    switchBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+    leftContainer.appendChild(switchBtn);
+
+    // TOGGLE BACK / MAXIMIZE BUTTON
     const toggleBackBtn = document.createElement('div');
     toggleBackBtn.className = "jump-toggle-back";
     toggleBackBtn.innerText = "▶";
@@ -322,7 +336,6 @@ function initControls() {
     toggleBackBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
     leftContainer.appendChild(toggleBackBtn);
 
-    // Helper bikin tombol biar nggak repetisi
     function makeButton(label, fn) {
         const btn = document.createElement('button');
         btn.innerText = label;
@@ -334,30 +347,63 @@ function initControls() {
         return btn;
     }
 
+    // Definisi Tombol Atas
     const rowTopDefs = [
         { label: "✎", fn: (btn)=> saveToNotes(btn) },
         { label: "♫-", fn: ()=> changeVolume(-10) },
         { label: "♫+", fn: ()=> changeVolume(10)  },
     ];
 
+    // Definisi Tombol Bawah
     const rowBotDefs = [
-        { label: "-30", fn: ()=> jump(-30) },
-        { label: "-5",  fn: ()=> jump(-5)  },
-        { label: "+5",  fn: ()=> jump(5)   },
-        { label: "+30", fn: ()=> jump(30)  },
+        { label: "-30", fn: ()=> jump(-30), val: -30 },
+        { label: "-5",  fn: ()=> jump(-5), val: -5  },
+        { label: "+5",  fn: ()=> jump(5), val: 5   },
+        { label: "+30", fn: ()=> jump(30), val: 30  },
     ];
 
+    // Wadah Tombol Atas
     const rowTop = document.createElement('div');
     rowTop.className = "jump-row";
     rowTopDefs.forEach(({ label, fn }) => rowTop.appendChild(makeButton(label, fn)));
     leftContainer.appendChild(rowTop);
 
+    // Wadah Tombol Bawah
     const rowBot = document.createElement('div');
     rowBot.className = "jump-row";
-    rowBotDefs.forEach(({ label, fn }) => rowBot.appendChild(makeButton(label, fn)));
+    const botButtons = [];
+    rowBotDefs.forEach(({ label, fn, val }) => {
+        let btn = makeButton(label, fn);
+        btn.dataset.val = val;
+        botButtons.push(btn);
+        rowBot.appendChild(btn);
+    });
     leftContainer.appendChild(rowBot);
 
     globalControls = leftContainer;
+
+    // FUNGSI UPDATE TAMPILAN SESUAI MODE
+    function updateButtonVisibility() {
+        if (currentMode === 0) {
+            // Mode 0: Tampil semua
+            rowTop.style.display = 'flex';
+            botButtons.forEach(btn => btn.style.display = 'flex');
+        } else if (currentMode === 1) {
+            // Mode 1: Sembunyikan Vol & Note, sisakan -5 dan +5
+            rowTop.style.display = 'none';
+            botButtons.forEach(btn => {
+                const val = Math.abs(parseInt(btn.dataset.val));
+                btn.style.display = (val === 5) ? 'flex' : 'none';
+            });
+        } else if (currentMode === 2) {
+            // Mode 2: Sembunyikan Vol & Note, tampilkan -30, -5, +5, +30
+            rowTop.style.display = 'none';
+            botButtons.forEach(btn => btn.style.display = 'flex');
+        }
+    }
+
+    // Terapkan visibility awal
+    updateButtonVisibility();
 
     addFullscreenListener(()=>{
         setTimeout(() => { updatePosition(); }, 150);
@@ -521,6 +567,34 @@ style.innerHTML = `
     transform: scale(1.1);
 }
 
+.jump-switch-btn {
+    position: absolute;
+    top: -22px;
+    right: 8px;
+    background: #4d94ff !important;
+    color: white !important;
+    border: none;
+    border-radius: 6px !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    font-weight: bold;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    z-index: 2147483647;
+}
+
+.jump-switch-btn:hover {
+    background: #1a75ff !important;
+    transform: scale(1.1);
+}
+
 .jump-toggle-back {
     display: none;
     background: rgba(0,0,0,0.8);
@@ -607,6 +681,16 @@ style.innerHTML = `
         min-width: 20px !important;
         min-height: 20px !important;
         font-size: 14px !important;
+    }
+    
+    .jump-switch-btn {
+        top: -20px;
+        right: 4px;
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        min-height: 20px !important;
+        font-size: 12px !important;
     }
 }
 `;
